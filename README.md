@@ -22,3 +22,4 @@ Embedded programming (C/Python)
 🚧 Project Status
 
 Planning stage – development has not yet started.
+bravo guys
