@@ -1,4 +1,6 @@
 # Automatic-Pet-Feeder
+3rd year project
+ewhwdjue
 🐾 Automatic Pet Feeder
 
 This project aims to design and develop an automatic pet feeder that can dispense food to pets at scheduled times without human intervention.
