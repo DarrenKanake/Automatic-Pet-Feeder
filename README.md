@@ -1,154 +1,152 @@
-# Smart Pet Feeding and Monitoring System
+# Smart Pet Feeder (ESP32 + Web Control)
 
-This is a smart IoT-based pet feeder I built as part of my instrumentation project. It’s powered by an **ESP32-WROOM-32** and designed to automate feeding, track food levels, and make sure only the right pet gets fed.
+This is a smart pet feeding system I built using an **ESP32**.
+It automatically detects when a pet is near, notifies the owner, and allows feeding either manually or remotely through a web interface.
 
-The system runs on its own local Wi-Fi network and has a web dashboard where you can monitor everything in real time, trigger feeding, and manage RFID access.
-
----
-
-## 🚀 Key Features
-
-* **State Machine Design:**
-  Instead of messy loops, the system uses a clean state-based approach (`STATE_IDLE` → `STATE_ADD_RFID_MODE`) which makes it faster and more efficient.
-
-* **Dual Authentication (RFID + IR):**
-  Feeding only happens if:
-
-  * The pet is physically present (IR sensor)
-  * The RFID tag is recognized
-    This prevents wrong or accidental feeding.
-
-* **Accurate Weight Measurement:**
-  Uses an **HX711 load cell** with a moving average filter (15 samples) to give stable and accurate food weight readings in grams.
-
-* **Safety Checks:**
-
-  * Won’t feed if bowl already has enough food (>40g)
-  * Won’t feed if storage is almost empty (<10%)
-  * Clears unauthorized attempts automatically
-
-* **RFID Storage (Persistent):**
-  Stores up to 5 RFID tags using ESP32 flash memory, so data is not lost even after power off.
-
-* **Built-in Web Dashboard:**
-  The ESP32 hosts a simple web server where you can:
-
-  * See live data
-  * Feed remotely
-  * Calibrate the scale
-  * Add/remove RFID tags
+The system also tracks food weight in real-time and ensures safe feeding with cooldowns and checks.
 
 ---
 
-## 🗺️ System Flow (State Machine)
+## 🚀 Features
 
-Here’s how the system runs step by step:
+* **Automatic Pet Detection**
 
-1. **`STATE_IDLE`**
-   Monitors weight, food level, and checks if a pet is nearby.
+  * Uses an IR sensor to detect when the pet is near the bowl
 
-2. **`STATE_PET_DETECTED`**
-   Confirms the pet is actually present (filters noise).
+* **Remote Feeding Approval**
 
-3. **`STATE_SCANNING_RFID`**
-   Starts scanning for RFID tags.
+  * Sends a notification through WebSocket
+  * Owner approves feeding from a web dashboard
 
-4. **`STATE_AUTHORIZED / UNAUTHORIZED`**
+* **Manual Controls**
 
-   * If valid → proceed
-   * If not → buzzer alert
+  * Button to feed manually
+  * Button to tare/reset the scale
 
-5. **`STATE_FEEDING`**
-   Opens the food gate using a servo motor and temporarily pauses weight readings to avoid noise.
+* **Accurate Weight Measurement**
 
-6. **`STATE_ADD_RFID_MODE`**
-   30-second mode to register new RFID tags.
+  * Uses HX711 load cell
+  * Applies filtering for stable readings
 
----
+* **Cooldown System**
 
-## 🔌 Hardware Setup
+  * Prevents continuous feeding (8-second delay between feeds)
 
-| Component         | Module         | ESP32 Pin                | Interface |
-| ----------------- | -------------- | ------------------------ | --------- |
-| Controller        | ESP32-WROOM-32 | –                        | Core      |
-| OLED Display      | SSD1306        | IO21 (SDA), IO22 (SCL)   | I2C       |
-| Ultrasonic Sensor | HC-SR04        | IO16 (TRIG), IO17 (ECHO) | Digital   |
-| Load Cell         | HX711          | IO34 (DT), IO18 (SCK)    | Serial    |
-| IR Sensor         | FC-51          | IO27                     | Digital   |
-| Servo Motor       | SG90           | IO26                     | PWM       |
-| Buzzer            | Passive        | IO25                     | Digital   |
-| Feed Button       | Push Button    | IO23                     | Input     |
-| Tare Button       | Push Button    | IO19                     | Input     |
-| RFID (SS)         | MFRC522        | IO5                      | SPI       |
-| RFID (RST)        | MFRC522        | IO4                      | SPI       |
-| RFID (SCK)        | MFRC522        | IO14                     | SPI       |
-| RFID (MOSI)       | MFRC522        | IO13                     | SPI       |
-| RFID (MISO)       | MFRC522        | IO12                     | SPI       |
+* **OLED Display**
+
+  * Shows:
+
+    * Bowl weight
+    * Food level
+    * Pet presence
+    * Last feed time
+
+* **Sound Feedback**
+
+  * Buzzer alerts during feeding
+
+* **Built-in Wi-Fi Access Point**
+
+  * ESP32 creates its own network
+  * No internet needed
 
 ---
 
-## 💻 Web Dashboard
+## 🧠 How It Works
 
-Connect to Wi-Fi:
+1. System continuously reads weight and checks for pet presence
+2. If a pet is detected and food is low:
 
-* **SSID:** `PetFeeder_WiFi`
-* **Password:** `feedthepet`
-* **IP Address:** `192.168.4.1`
-
-### Available Endpoints:
-
-* **`/`**
-  Main dashboard (auto-refresh every 3 seconds)
-
-* **`/feed`**
-  Manually trigger feeding (checks safety first)
-
-* **`/tare`**
-  Reset the scale
-
-* **`/addrfid`**
-  Add a new RFID tag (30-second window)
-
-* **`/removerfid`**
-  Clear all saved RFID tags
+   * A message is sent to the web dashboard
+3. Owner clicks **"Approve Feeding"**
+4. Servo opens and dispenses food
+5. System waits for cooldown before next feeding
 
 ---
 
-## 🛠️ Setup & Upload
+## 🔌 Hardware Components
+
+| Component                | ESP32 Pin |
+| ------------------------ | --------- |
+| Ultrasonic Sensor (TRIG) | 16        |
+| Ultrasonic Sensor (ECHO) | 17        |
+| HX711 DT                 | 34        |
+| HX711 SCK                | 18        |
+| IR Sensor                | 27        |
+| Servo Motor              | 26        |
+| Buzzer                   | 25        |
+| Manual Feed Button       | 23        |
+| Tare Button              | 19        |
+| OLED SDA                 | 21        |
+| OLED SCL                 | 22        |
+
+---
+
+## 📶 Wi-Fi Access
+
+The ESP32 creates its own Wi-Fi network:
+
+* **SSID:** `PetFeeder`
+* **Password:** `12345678`
+
+Open your browser and go to:
+
+```
+http://192.168.4.1
+```
+
+---
+
+## 💻 Web Interface
+
+The web page allows you to:
+
+* See pet detection messages
+* Approve feeding remotely
+
+### Button:
+
+* **Approve Feeding** → sends command to ESP32 via WebSocket
+
+---
+
+## 🛠️ Setup
 
 ### Requirements
 
-* VS Code + PlatformIO (recommended) or Arduino IDE
-* Install these libraries:
+Install these libraries:
 
-  * HX711
-  * ESP32Servo
-  * Adafruit SSD1306
-  * Adafruit GFX
-  * MFRC522
+* HX711
+* ESP32Servo
+* Adafruit SSD1306
+* Adafruit GFX
+* ESPAsyncWebServer
+* AsyncTCP
+
+---
 
 ### Steps
 
-1. **Connect Hardware**
-   Follow the pin configuration table above.
+1. Connect all components using the pin table
+2. Upload code to ESP32
+3. Power the system
+4. Connect to `PetFeeder` Wi-Fi
+5. Open `192.168.4.1` in browser
 
-2. **Calibrate the Load Cell**
-   Adjust `CALIBRATION_FACTOR` (default: 6748.75) if readings are off.
+---
 
-3. **Upload Code**
+## ⚙️ Important Notes
 
-   * Connect ESP32 via USB
-   * Select board: `esp32dev`
-   * Upload
-
-4. **Access Dashboard**
-
-   * Connect to Wi-Fi
-   * Open browser → `http://192.168.4.1`
+* Calibration factor may need adjustment depending on your load cell
+* If weight readings are unstable, check wiring and filtering
+* Ensure servo has enough power supply
 
 ---
 
 ## 💡 Summary
 
-This system combines embedded systems, IoT, and sensor integration to create a reliable and secure automated pet feeder. It’s efficient, accurate, and designed with real-world safety and usability in mind.
+This project combines embedded systems, IoT, and real-time control to create a smart and reliable pet feeder.
+It’s simple to use, works offline, and gives full control to the owner.
+
+---
 
