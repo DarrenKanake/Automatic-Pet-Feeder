@@ -1,6 +1,9 @@
 # Smart Pet Feeder (ESP32 + Web Control)
-
-This is a smart pet feeding system I built using an **ESP32**.
+Team
+Kamau Faith Wambui
+Kyalo Emmanuel Kavemba
+Kanake Darren Rene
+This is a smart pet feeding system we built using an **ESP32**.
 It automatically detects when a pet is near, notifies the owner, and allows feeding either manually or remotely through a web interface.
 
 The system also tracks food weight in real-time and ensures safe feeding with cooldowns and checks.
